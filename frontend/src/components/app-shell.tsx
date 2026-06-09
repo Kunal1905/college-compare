@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 
-const AUTH_ROUTES = new Set(["/login", "/signup"]);
+const AUTH_ROUTES = new Set(["/login", "/signup", "/sign-in", "/sign-up"]);
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();

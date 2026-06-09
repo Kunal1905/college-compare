@@ -11,7 +11,7 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export const authMiddleware = (
+export const authMiddleware = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
@@ -40,38 +40,25 @@ export const authMiddleware = (
       userId: number;
       email: string;
     };
-    db
+    const [user] = await db
       .select({ id: users.id, email: users.email })
       .from(users)
       .where(eq(users.id, decoded.userId))
-      .limit(1)
-      .then((rows) => {
-        const user = rows[0];
+      .limit(1);
 
-        if (!user) {
-          res.status(401).json({
-            success: false,
-            message: "Authentication token is no longer valid. Please log in again.",
-          });
-          return;
-        }
-
-        req.user = {
-          userId: user.id,
-          email: user.email,
-        };
-
-        next();
-      })
-      .catch((error) => {
-        console.error("Auth middleware lookup error", error);
-        res.status(500).json({
-          success: false,
-          message: "Unable to verify authentication right now.",
-        });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication token is no longer valid. Please log in again.",
       });
+    }
 
-    return;
+    req.user = {
+      userId: user.id,
+      email: user.email,
+    };
+
+    return next();
   } catch {
     return res.status(401).json({
       success: false,

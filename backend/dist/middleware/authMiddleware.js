@@ -8,7 +8,7 @@ const drizzle_orm_1 = require("drizzle-orm");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const db_1 = require("../db");
 const schema_1 = require("../db/schema");
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
         return res.status(401).json({
@@ -26,34 +26,22 @@ const authMiddleware = (req, res, next) => {
     }
     try {
         const decoded = jsonwebtoken_1.default.verify(token, secret);
-        db_1.db
+        const [user] = await db_1.db
             .select({ id: schema_1.users.id, email: schema_1.users.email })
             .from(schema_1.users)
             .where((0, drizzle_orm_1.eq)(schema_1.users.id, decoded.userId))
-            .limit(1)
-            .then((rows) => {
-            const user = rows[0];
-            if (!user) {
-                res.status(401).json({
-                    success: false,
-                    message: "Authentication token is no longer valid. Please log in again.",
-                });
-                return;
-            }
-            req.user = {
-                userId: user.id,
-                email: user.email,
-            };
-            next();
-        })
-            .catch((error) => {
-            console.error("Auth middleware lookup error", error);
-            res.status(500).json({
+            .limit(1);
+        if (!user) {
+            return res.status(401).json({
                 success: false,
-                message: "Unable to verify authentication right now.",
+                message: "Authentication token is no longer valid. Please log in again.",
             });
-        });
-        return;
+        }
+        req.user = {
+            userId: user.id,
+            email: user.email,
+        };
+        return next();
     }
     catch {
         return res.status(401).json({

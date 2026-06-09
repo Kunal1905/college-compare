@@ -265,7 +265,7 @@ const collegeDefinitions = [
         state: "Gujarat",
         fees: 2500000,
         rating: 4.9,
-        imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
+        imageUrl: "https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?auto=format&fit=crop&w=1200&q=80",
         overview: "India's flagship management school known for case-based learning, elite consulting placements, and a powerful alumni network.",
         courseNames: ["MBA", "MBA Finance", "PGDM"],
         placement: {
