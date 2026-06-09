@@ -8,8 +8,6 @@ import {
   GraduationCap,
   Lock,
   Mail,
-  ShieldCheck,
-  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -22,8 +20,8 @@ export const LoginPageClient = () => {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/colleges";
   const { login, isAuthenticated, isHydrated } = useAuth();
-  const [email, setEmail] = useState("demo@example.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
@@ -207,26 +205,13 @@ export const LoginPageClient = () => {
                 </div>
               ) : null}
 
-              <div className="space-y-4 pt-2">
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="cc-button-primary flex w-full items-center justify-center gap-2 py-4 text-sm disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSubmitting ? "Logging in..." : "Login"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail("demo@example.com");
-                    setPassword("password123");
-                    toast.success("Demo credentials applied.");
-                  }}
-                  className="cc-button-secondary flex w-full items-center justify-center gap-2 py-4 text-sm"
-                >
-                  <UserCheck className="h-4 w-4" />
-                  Demo Login
                 </button>
               </div>
             </form>
@@ -238,11 +223,6 @@ export const LoginPageClient = () => {
                   Sign up
                 </Link>
               </p>
-            </div>
-
-            <div className="mt-10 inline-flex items-center gap-2 rounded-full border border-secondary-container/30 bg-secondary-container/10 px-4 py-2 text-xs font-semibold text-secondary">
-              <ShieldCheck className="h-4 w-4" />
-              Demo: demo@example.com / password123
             </div>
           </div>
         </div>

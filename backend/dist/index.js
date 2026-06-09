@@ -12,15 +12,18 @@ const savedCollegeRoutes_1 = __importDefault(require("./routes/savedCollegeRoute
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const allowedOrigins = Array.from(new Set([
-    ...(process.env.FRONTEND_URL ?? "")
+    ...(process.env.FRONTEND_URLS ?? process.env.FRONTEND_URL ?? "")
         .split(",")
         .map((origin) => origin.trim())
         .filter(Boolean),
     "http://localhost:3000",
 ]));
+const allowedOriginPatterns = [/^https:\/\/college-compare[a-z0-9-]*\.vercel\.app$/];
+const isAllowedOrigin = (origin) => allowedOrigins.includes(origin) ||
+    allowedOriginPatterns.some((pattern) => pattern.test(origin));
 app.use((0, cors_1.default)({
     origin(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || isAllowedOrigin(origin)) {
             callback(null, true);
             return;
         }

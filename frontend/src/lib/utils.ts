@@ -42,6 +42,15 @@ export const getErrorMessage = (error: unknown, fallback: string) => {
   if (
     typeof error === "object" &&
     error !== null &&
+    "code" in error &&
+    error.code === "ERR_NETWORK"
+  ) {
+    return "Cannot connect to the backend. This is usually caused by CORS, an incorrect API URL, or the backend being asleep/offline.";
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
     "response" in error &&
     typeof error.response === "object" &&
     error.response !== null &&
