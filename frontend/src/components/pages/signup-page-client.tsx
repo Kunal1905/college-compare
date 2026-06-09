@@ -136,8 +136,8 @@ export const SignupPageClient = () => {
               </div>
               <div className="rounded-xl border border-white/10 bg-white/10 p-6 backdrop-blur-sm">
                 <p className="text-base italic leading-7 text-white">
-                  "Having my saved colleges and filters in one place made the search
-                  process much easier to manage."
+                  &ldquo;Having my saved colleges and filters in one place made the
+                  search process much easier to manage.&rdquo;
                 </p>
                 <p className="mt-3 text-sm font-semibold text-primary-fixed">
                   College Compass user journey

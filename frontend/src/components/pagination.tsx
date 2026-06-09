@@ -13,15 +13,16 @@ export const Pagination = ({
     return null;
   }
 
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1).filter(
-    (page) =>
-      page === 1 ||
-      page === totalPages ||
-      Math.abs(page - currentPage) <= 1
+  const maxVisiblePages = 5;
+  const visiblePageCount = Math.min(totalPages, maxVisiblePages);
+  const halfWindow = Math.floor(visiblePageCount / 2);
+  const startPage = Math.min(
+    Math.max(1, currentPage - halfWindow),
+    totalPages - visiblePageCount + 1
   );
-
-  const visiblePages = pages.filter(
-    (page, index) => index === 0 || page !== pages[index - 1]
+  const visiblePages = Array.from(
+    { length: visiblePageCount },
+    (_, index) => startPage + index
   );
 
   return (
@@ -39,7 +40,11 @@ export const Pagination = ({
         <button
           key={page}
           type="button"
-          onClick={() => onPageChange(page)}
+          onClick={() => {
+            if (page !== currentPage) {
+              onPageChange(page);
+            }
+          }}
           className={`h-10 w-10 rounded-lg border text-sm font-semibold transition ${
             page === currentPage
               ? "border-primary bg-primary text-white"

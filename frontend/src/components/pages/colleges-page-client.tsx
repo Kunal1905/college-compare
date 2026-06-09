@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CollegeCard } from "@/components/college-card";
@@ -30,6 +30,20 @@ const feeOptions = [
 ];
 
 const DEFAULT_MIN_RATING = "3";
+const COLLEGES_PAGE_SIZE = 6;
+
+type CachedCollegeResult = {
+  colleges: CollegeSummary[];
+  pagination: PaginationMeta;
+};
+
+const collegeResultsCache = new Map<string, CachedCollegeResult>();
+
+const isCanceledRequest = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "code" in error &&
+  error.code === "ERR_CANCELED";
 
 const sanitizeMinRating = (value: string | null) => {
   if (!value) {
@@ -51,10 +65,12 @@ const sanitizeMaxFees = (value: string | null) => {
   return Number.isFinite(parsed) && parsed > 0 ? String(parsed) : "";
 };
 
-const getFiltersFromParams = (
-  searchParams: ReturnType<typeof useSearchParams>
-): CollegeFilterValues => ({
-  search: searchParams.get("search") ?? "",
+type ReadableSearchParams = {
+  get: (name: string) => string | null;
+};
+
+const getFiltersFromParams = (searchParams: ReadableSearchParams): CollegeFilterValues => ({
+  search: searchParams.get("search")?.trim() ?? "",
   location: (searchParams.get("location") ?? "")
     .split(",")
     .map((value) => value.trim())
@@ -65,7 +81,7 @@ const getFiltersFromParams = (
   sort: searchParams.get("sort") === "fees_asc" ? "fees_asc" : "rating_desc",
 });
 
-const getPageFromParams = (searchParams: ReturnType<typeof useSearchParams>) => {
+const getPageFromParams = (searchParams: ReadableSearchParams) => {
   const pageValue = Number(searchParams.get("page") ?? "1");
   return Number.isFinite(pageValue) && pageValue > 0 ? pageValue : 1;
 };
@@ -74,14 +90,24 @@ export const CollegesPageClient = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsKey = searchParams.toString();
-  const appliedFilters = getFiltersFromParams(searchParams);
-  const currentPage = getPageFromParams(searchParams);
+  const parsedSearchParams = useMemo(
+    () => new URLSearchParams(paramsKey),
+    [paramsKey]
+  );
+  const appliedFilters = useMemo(
+    () => getFiltersFromParams(parsedSearchParams),
+    [parsedSearchParams]
+  );
+  const currentPage = useMemo(
+    () => getPageFromParams(parsedSearchParams),
+    [parsedSearchParams]
+  );
   const selectedCourse = appliedFilters.course;
   const [filters, setFilters] = useState<CollegeFilterValues>(appliedFilters);
   const [colleges, setColleges] = useState<CollegeSummary[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta>({
     page: 1,
-    limit: 6,
+    limit: COLLEGES_PAGE_SIZE,
     total: 0,
     totalPages: 1,
   });
@@ -90,33 +116,73 @@ export const CollegesPageClient = () => {
   const { savedIds, markSaved } = useSavedCollegeIds();
 
   useEffect(() => {
-    setFilters(appliedFilters);
-  }, [paramsKey]);
+    Promise.resolve().then(() => {
+      setFilters(appliedFilters);
+    });
+  }, [appliedFilters]);
 
   useEffect(() => {
+    const cacheKey = paramsKey || "default";
+    const controller = new AbortController();
+
     const fetchColleges = async () => {
+      const cachedResult = collegeResultsCache.get(cacheKey);
+
+      if (cachedResult) {
+        await Promise.resolve();
+        setColleges(cachedResult.colleges);
+        setPagination(cachedResult.pagination);
+        setError("");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         const response = await api.get("/api/colleges", {
+          signal: controller.signal,
           params: {
             ...appliedFilters,
             page: currentPage,
-            limit: 6,
+            limit: COLLEGES_PAGE_SIZE,
           },
         });
+        const nextColleges = response.data.data as CollegeSummary[];
+        const nextPagination = response.data.pagination as PaginationMeta;
 
-        setColleges(response.data.data);
-        setPagination(response.data.pagination);
+        collegeResultsCache.set(cacheKey, {
+          colleges: nextColleges,
+          pagination: nextPagination,
+        });
+        setColleges(nextColleges);
+        setPagination(nextPagination);
         setError("");
       } catch (error) {
+        if (isCanceledRequest(error)) {
+          return;
+        }
+
+        setColleges([]);
+        setPagination({
+          page: currentPage,
+          limit: COLLEGES_PAGE_SIZE,
+          total: 0,
+          totalPages: 1,
+        });
         setError(getErrorMessage(error, "Unable to load colleges right now."));
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchColleges();
-  }, [paramsKey]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [appliedFilters, currentPage, paramsKey]);
 
   const updateFilter = (
     field: Exclude<keyof CollegeFilterValues, "location">,

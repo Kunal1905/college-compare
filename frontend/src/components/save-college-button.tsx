@@ -28,7 +28,9 @@ export const SaveCollegeButton = ({
   const [isSaved, setIsSaved] = useState(initialSaved);
 
   useEffect(() => {
-    setIsSaved(initialSaved);
+    Promise.resolve().then(() => {
+      setIsSaved(initialSaved);
+    });
   }, [initialSaved]);
 
   const handleSave = async () => {

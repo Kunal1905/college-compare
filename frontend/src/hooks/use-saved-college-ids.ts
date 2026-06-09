@@ -15,7 +15,9 @@ export const useSavedCollegeIds = () => {
     }
 
     if (!isAuthenticated) {
-      setSavedIds(new Set());
+      Promise.resolve().then(() => {
+        setSavedIds(new Set());
+      });
       return;
     }
 

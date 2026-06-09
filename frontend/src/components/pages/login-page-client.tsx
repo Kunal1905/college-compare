@@ -141,8 +141,8 @@ export const LoginPageClient = () => {
               </div>
               <div className="rounded-xl border border-white/10 bg-white/10 p-6 backdrop-blur-sm">
                 <p className="text-base italic leading-7 text-white">
-                  "This platform transformed how I searched for my dream school.
-                  Every tool I needed was in one place."
+                  &ldquo;This platform transformed how I searched for my dream
+                  school. Every tool I needed was in one place.&rdquo;
                 </p>
                 <p className="mt-3 text-sm font-semibold text-primary-fixed">
                   Demo student experience

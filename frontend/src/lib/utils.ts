@@ -33,6 +33,15 @@ export const getErrorMessage = (error: unknown, fallback: string) => {
   if (
     typeof error === "object" &&
     error !== null &&
+    "code" in error &&
+    error.code === "ECONNABORTED"
+  ) {
+    return "The server took too long to respond. Please check that the backend is running and try again.";
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
     "response" in error &&
     typeof error.response === "object" &&
     error.response !== null &&
